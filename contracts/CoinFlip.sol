@@ -24,24 +24,20 @@ contract CoinFlip {
     mapping(uint256 => Game) public allGames;
 
     event GameCreated(
-        uint256 indexed gameId,
+        uint256 gameId,
         address indexed initializer,
         address indexed opponent,
         uint256 betAmount
     );
 
     event GameAccepted(
-        uint256 indexed gameId,
+        uint256 gameId,
         uint256 pickingSide
     );
 
     event GameFinished(
-        uint256 indexed gameId,
-        bool outcome
-    );
-
-    event GameCancelled(
-        uint256 indexed gameId
+        uint256 gameId,
+        address indexed winner
     );
 
     // Create a new game (funds deposited by the initializer)
@@ -86,39 +82,29 @@ contract CoinFlip {
         require(_coinSide == 1 || _coinSide == 2, "Invalid coin side");
 
         Game storage game = allGames[_gameId];
-
-        address payable flipper;
-        address payable opponent;
-
-        if (game.pickingSide == 1) {
-            require(msg.sender == game.initializer, "Only the predetermined picking side can flip the coin");
-            flipper = payable(game.initializer);
-            opponent = payable(game.opponent);
-        } else if (game.pickingSide == 2) {
-            require(msg.sender == game.opponent, "Only the predetermined picking side can flip the coin");
-            flipper = payable(game.opponent);
-            opponent = payable(game.initializer);
-        } else {
-            revert("Invalid picking side");
-        }
-
         require(game.gameId != 0, "Game does not exist");
         require(game.status == GameStatus.STARTED, "Invalid game status");
-        require(msg.sender == game.opponent, "Only the opponent can play");
+
+        address payable initializer = payable(game.initializer);
+        address payable gameOpponent = payable(game.opponent);
+
+        (address payable flipper, address payable opponent) = game.pickingSide == 1 
+            ? (initializer, gameOpponent)
+            : (gameOpponent, initializer);
+
+        require(msg.sender == (game.pickingSide == 1 ? initializer : gameOpponent), 
+            "Only the predetermined picking side can flip the coin");
 
         uint256 totalBetAmount = game.betAmount * 2;
         uint256 coinFlipResult = 2; // Static for testing purpose, should be random !!!!!!!!!!!
 
-        if (coinFlipResult == _coinSide) {
-            flipper.transfer(totalBetAmount);
-            game.winner = flipper;
-        } else {
-            opponent.transfer(totalBetAmount);
-            game.winner = opponent;
-        }
+        address payable winner = coinFlipResult == _coinSide ? flipper : opponent;
 
+        winner.transfer(totalBetAmount);
+
+        game.winner = winner;
         game.status = GameStatus.FINISHED;
 
-        emit GameFinished(_gameId, game.winner != address(0));
+        emit GameFinished(_gameId, winner);
     }
 }
