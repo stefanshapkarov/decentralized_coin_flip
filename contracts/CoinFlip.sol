@@ -66,12 +66,15 @@ contract CoinFlip {
     function acceptGame(uint256 _gameId) external payable {
         Game storage game = allGames[_gameId];
 
+        address payable initializer = payable(game.initializer);
+        address payable opponent = payable(game.opponent);
+
         require(game.gameId != 0, "Game does not exist");
         require(game.status == GameStatus.INITIALIZED, "Invalid game status");
-        require(msg.sender == game.opponent, "Only the designated opponent can play");
+        require(msg.sender == opponent, "Only the designated opponent can play");
         require(msg.value == game.betAmount, "Bet amount must match the initializer's bet");
 
-        game.pickingSide = 2; // Static for testing purpose, should be random !!!!!!!!!!!
+        game.pickingSide = getRandomSide(initializer, opponent);
 
         game.status = GameStatus.STARTED;
 
@@ -96,7 +99,7 @@ contract CoinFlip {
             "Only the predetermined picking side can flip the coin");
 
         uint256 totalBetAmount = game.betAmount * 2;
-        uint256 coinFlipResult = 2; // Static for testing purpose, should be random !!!!!!!!!!!
+        uint256 coinFlipResult = getRandomSide(initializer, gameOpponent);
 
         address payable winner = coinFlipResult == _coinSide ? flipper : opponent;
 
@@ -106,5 +109,17 @@ contract CoinFlip {
         game.status = GameStatus.FINISHED;
 
         emit GameFinished(_gameId, winner);
+    }
+
+    function getRandomSide(address initializer, address opponent) internal view returns (uint256) {
+        
+        uint256 randomNumber = uint256(keccak256(abi.encodePacked(
+            block.timestamp,
+            block.prevrandao,
+            initializer,
+            opponent
+        )));
+
+        return (randomNumber % 2) + 1;
     }
 }
