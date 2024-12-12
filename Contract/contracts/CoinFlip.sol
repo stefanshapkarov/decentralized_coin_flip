@@ -18,16 +18,20 @@ contract CoinFlip {
         GameStatus status;
         uint256 pickingSide;
         address winner;
+        uint256 createdAt;
     }
 
     uint256 public totalGameCount;
+    uint256 public totalFinishedGameCount;
     mapping(uint256 => Game) public allGames;
+    uint256 public constant GAME_EXPIRATION_TIME = 1 days;
 
     event GameCreated(
         uint256 gameId,
         address indexed initializer,
         address indexed opponent,
-        uint256 betAmount
+        uint256 betAmount,
+        uint256 createdAt
     );
 
     event GameAccepted(
@@ -38,6 +42,10 @@ contract CoinFlip {
     event GameFinished(
         uint256 gameId,
         address indexed winner
+    );
+
+    event GameCancelled(
+        uint256 gameId
     );
 
     // Create a new game (funds deposited by the initializer)
@@ -54,12 +62,13 @@ contract CoinFlip {
             betAmount: msg.value,
             status: GameStatus.INITIALIZED,
             pickingSide: 0,
-            winner: address(0)
+            winner: address(0),
+            createdAt: block.timestamp
         });
 
         allGames[totalGameCount] = newGame;
 
-        emit GameCreated(totalGameCount, msg.sender, _opponent, msg.value);
+        emit GameCreated(totalGameCount, msg.sender, _opponent, msg.value, block.timestamp);
     }
 
     // Accept a game (rest of funds deposited by the opponent) & determine the picking side (randomly)
@@ -80,7 +89,8 @@ contract CoinFlip {
 
         emit GameAccepted(_gameId, game.pickingSide);
     }
-
+    
+    // Flip the coin (only the predetermined picking side can flip the coin)
     function flipCoin(uint256 _gameId, uint256 _coinSide) external {
         require(_coinSide == 1 || _coinSide == 2, "Invalid coin side");
 
@@ -108,7 +118,23 @@ contract CoinFlip {
         game.winner = winner;
         game.status = GameStatus.FINISHED;
 
+        totalFinishedGameCount++;
         emit GameFinished(_gameId, winner);
+    }
+
+    // Cancel a game (only the initializer can cancel the game if it has expired and hasn't been accepted yet)
+    function cancelGame(uint256 _gameId) external {
+        Game storage game = allGames[_gameId];
+        require(game.gameId != 0, "Game does not exist");
+        require(game.status == GameStatus.INITIALIZED, "Invalid game status");
+        require(block.timestamp >= game.createdAt + GAME_EXPIRATION_TIME, "Game has not expired yet");
+        require(msg.sender == game.initializer, "Only the initializer can cancel the game");
+
+        payable(game.initializer).transfer(game.betAmount);
+
+        game.status = GameStatus.CANCELLED;
+
+        emit GameCancelled(_gameId);
     }
 
     function getRandomSide(address initializer, address opponent) internal view returns (uint256) {
