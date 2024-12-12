@@ -27,7 +27,7 @@ contract CoinFlip {
     uint256 public constant GAME_EXPIRATION_TIME = 1 days;
 
     event GameCreated(
-        uint256 gameId,
+        uint256 indexed gameId,
         address indexed initializer,
         address indexed opponent,
         uint256 betAmount,
@@ -35,17 +35,18 @@ contract CoinFlip {
     );
 
     event GameAccepted(
-        uint256 gameId,
-        uint256 pickingSide
+        uint256 indexed gameId,
+        uint256 indexed pickingSide
     );
 
     event GameFinished(
-        uint256 gameId,
+        uint256 indexed gameId,
         address indexed winner
+        address indexed
     );
 
     event GameCancelled(
-        uint256 gameId
+        uint256 indexed gameId
     );
 
     // Create a new game (funds deposited by the initializer)
