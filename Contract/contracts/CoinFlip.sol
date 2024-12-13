@@ -42,7 +42,6 @@ contract CoinFlip {
     event GameFinished(
         uint256 indexed gameId,
         address indexed winner
-        address indexed
     );
 
     event GameCancelled(
