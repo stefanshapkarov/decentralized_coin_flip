@@ -1,19 +1,27 @@
 <script setup>
-import { ref, computed, inject, onUnmounted } from 'vue';
+import { ref, inject } from 'vue';
 import { ethers } from 'ethers';
 
 const opponentAddress = ref('');
 const betAmount = ref('');
-const contractRead = inject('contractRead');
 const contractWrite = inject('contractWrite');
 const inviteUrl = ref('');
-
 async function createGame() {
     try {
         const transaction = await contractWrite.value.createGame(opponentAddress.value, { value: ethers.parseEther(betAmount.value.toString()) });
-        await transaction.wait();
+        const receipt = await transaction.wait();
 
-        console.log(transaction);
+        console.log(receipt);
+
+        const gameCreatedEvent = receipt.logs.find(
+            (log) => log.fragment && log.fragment.name === 'GameCreated'
+        );
+
+        if (gameCreatedEvent) {
+            const { gameId, creator, opponent, betAmount } = gameCreatedEvent.args;
+            
+            inviteUrl.value = window.location.origin + `/play-game/${gameId}`;
+        }
     } catch (error) {
         alert("The following error occurred: " + error.message);
     }
@@ -42,6 +50,8 @@ async function createGame() {
 #form-container {
     display: flex;
     justify-content: center;
+    flex-direction: column;
+    align-items: center;
 }
 
 form {

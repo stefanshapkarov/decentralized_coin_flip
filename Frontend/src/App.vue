@@ -2,7 +2,6 @@
 import { ref, provide, onMounted } from 'vue';
 import { ethers } from 'ethers';
 import CoinFlipABI from './abis/CoinFlipABI.json';
-import CreateGame from './components/CreateGame.vue';
 
 const provider = ref(null);
 const signer = ref(null);
@@ -25,13 +24,13 @@ async function connectMetaMask() {
       balance.value = ethers.formatEther(unformattedBalance);
 
       contractRead.value = new ethers.Contract(
-        '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+        import.meta.env.VITE_DEPLOYED_CONTRACT_ADDRESS,
         CoinFlipABI,
         tempProvider
       );
 
       contractWrite.value = new ethers.Contract(
-        '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+        import.meta.env.VITE_DEPLOYED_CONTRACT_ADDRESS,
         CoinFlipABI,
         tempSigner
       );
