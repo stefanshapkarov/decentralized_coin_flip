@@ -3,8 +3,6 @@ import { ref, provide, onMounted } from 'vue';
 import { ethers } from 'ethers';
 import CoinFlipABI from './abis/CoinFlipABI.json';
 
-const provider = ref(null);
-const signer = ref(null);
 const contractRead = ref(null);
 const contractWrite = ref(null);
 const userAddress = ref(null);
@@ -13,26 +11,23 @@ const balance = ref(0);
 async function connectMetaMask() {
   if (window.ethereum && window.ethereum.isMetaMask) {
     try {
-      const tempProvider = new ethers.BrowserProvider(window.ethereum);
-      const tempSigner = await tempProvider.getSigner();
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
 
-      provider.value = tempProvider;
-      signer.value = tempSigner;
-
-      userAddress.value = await tempSigner.getAddress();
-      const unformattedBalance = await tempProvider.getBalance(userAddress.value);
+      userAddress.value = await signer.getAddress();
+      const unformattedBalance = await provider.getBalance(userAddress.value);
       balance.value = ethers.formatEther(unformattedBalance);
 
       contractRead.value = new ethers.Contract(
         import.meta.env.VITE_DEPLOYED_CONTRACT_ADDRESS,
         CoinFlipABI,
-        tempProvider
+        provider
       );
 
       contractWrite.value = new ethers.Contract(
         import.meta.env.VITE_DEPLOYED_CONTRACT_ADDRESS,
         CoinFlipABI,
-        tempSigner
+        signer
       );
 
     } catch (error) {
@@ -43,15 +38,24 @@ async function connectMetaMask() {
   }
 };
 
+async function updateBalance() {
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const unformattedBalance = await provider.getBalance(userAddress.value);
+    balance.value = ethers.formatEther(unformattedBalance);
+  } catch (error) {
+    alert('Error updating balance: ' + error);
+  }
+}
+
 onMounted(() => {
   connectMetaMask();
 });
 
-provide('provider', provider);
-provide('signer', signer);
 provide('contractRead', contractRead);
 provide('contractWrite', contractWrite);
 provide('userAddress', userAddress);
+provide('updateBalance', updateBalance)
 </script>
 
 <template>

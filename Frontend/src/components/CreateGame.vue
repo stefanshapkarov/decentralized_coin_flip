@@ -6,12 +6,12 @@ const opponentAddress = ref('');
 const betAmount = ref('');
 const contractWrite = inject('contractWrite');
 const inviteUrl = ref('');
+const updateBalance = inject('updateBalance');
+
 async function createGame() {
     try {
         const transaction = await contractWrite.value.createGame(opponentAddress.value, { value: ethers.parseEther(betAmount.value.toString()) });
         const receipt = await transaction.wait();
-
-        console.log(receipt);
 
         const gameCreatedEvent = receipt.logs.find(
             (log) => log.fragment && log.fragment.name === 'GameCreated'
@@ -19,8 +19,10 @@ async function createGame() {
 
         if (gameCreatedEvent) {
             const { gameId, creator, opponent, betAmount } = gameCreatedEvent.args;
-            
+
             inviteUrl.value = window.location.origin + `/play-game/${gameId}`;
+
+            await updateBalance();
         }
     } catch (error) {
         alert("The following error occurred: " + error.message);
@@ -39,7 +41,7 @@ async function createGame() {
             <button type="submit">Create Game</button>
         </form>
 
-        <div v-if="inviteUrl"> 
+        <div v-if="inviteUrl">
             <p>Game created successfully! Invite your opponent to join the game by sharing the following URL:</p>
             <a :href="inviteUrl" target="_blank">{{ inviteUrl }}</a>
         </div>
