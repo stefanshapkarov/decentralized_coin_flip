@@ -35,9 +35,9 @@ async function createGame() {
         <form @submit.prevent="createGame">
             <label for="opponentAddress">Opponent Address</label>
             <input type="text" v-model="opponentAddress" name="opponentAddress" id="opponentAddress"
-                placeholder="0x..." />
+                placeholder="0x..." required/>
             <label for="betAmount">Bet Amount</label>
-            <input type="number" v-model="betAmount" name="betAmount" id="betAmount" placeholder="Bet Amount" />
+            <input type="number" v-model="betAmount" name="betAmount" id="betAmount" placeholder="Bet Amount" required/>
             <button type="submit">Create Game</button>
         </form>
 

@@ -5,6 +5,7 @@ import CoinFlipABI from './abis/CoinFlipABI.json';
 
 const contractRead = ref(null);
 const contractWrite = ref(null);
+const currentBlockTimestamp = ref(null);
 const userAddress = ref(null);
 const balance = ref(0);
 
@@ -13,6 +14,8 @@ async function connectMetaMask() {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
+      const block = await provider.getBlock('latest');
+      currentBlockTimestamp.value = block.timestamp;
 
       userAddress.value = await signer.getAddress();
       const unformattedBalance = await provider.getBalance(userAddress.value);
@@ -55,7 +58,8 @@ onMounted(() => {
 provide('contractRead', contractRead);
 provide('contractWrite', contractWrite);
 provide('userAddress', userAddress);
-provide('updateBalance', updateBalance)
+provide('updateBalance', updateBalance);
+provide('currentBlockTimestamp', currentBlockTimestamp);
 </script>
 
 <template>
