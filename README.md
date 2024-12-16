@@ -1,0 +1,1 @@
+This project contains a smart contract flip coin betting game made with solidity and a frontend made with vue 3 composition api to allow users to play the game i.e. interact with the web3 smart contract using a web2 browser.

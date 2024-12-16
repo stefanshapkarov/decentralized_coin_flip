@@ -18,7 +18,7 @@ Then in the same folder run the following command to compile the contract
   npx hardhat compile
 ```
 
-In the hardhat configuration there is already one for sepolia testnet, but you can add more,
+In the hardhat configuration there is already one for sepolia testnet, but you can add more (make sure you add the necessary variables in a .env file),
 
 Optionally, you can deploy to a local node for which first you need to run
 
